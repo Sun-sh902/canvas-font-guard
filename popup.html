@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Canvas 字体保护</title>
+    <link rel="stylesheet" href="popup.css">
+    <script src="popup.js" defer></script>
+  </head>
+  <body>
+    <main class="panel">
+      <header class="heading">
+        <span class="eyebrow">CANVAS FONT GUARD</span>
+        <h1>字体探测保护</h1>
+      </header>
+
+      <section class="site" aria-live="polite">
+        <span class="site-label">当前站点</span>
+        <strong id="site-name">正在读取…</strong>
+        <span id="site-origin" class="origin"></span>
+      </section>
+
+      <button id="toggle" type="button" disabled>读取站点状态…</button>
+      <p id="status" class="status" role="status">仅对当前站点生效；启用后会重新加载页面。</p>
+
+      <details>
+        <summary>保护范围与限制</summary>
+        <p>Canvas 2D 与 OffscreenCanvas 中，命中的字体名会改为不存在的内部字体名，让浏览器使用候选字体栈中的普通回退字体。支持时也会从本地字体枚举结果中滤除命中字体。</p>
+        <p>这不会卸载系统字体，也不覆盖 DOM/CSS 字体测量、未知字体名、WebGL 或所有 Canvas 图像读回路径。扩展本身可能被页面识别。</p>
+      </details>
+
+      <footer>权限仅在你开启此站点时申请，关闭时撤销。</footer>
+    </main>
+  </body>
+</html>
