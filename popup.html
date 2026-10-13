@@ -14,14 +14,30 @@
         <h1>字体探测保护</h1>
       </header>
 
-      <section class="site" aria-live="polite">
-        <span class="site-label">当前站点</span>
-        <strong id="site-name">正在读取…</strong>
-        <span id="site-origin" class="origin"></span>
+      <section class="global-section" aria-live="polite">
+        <div class="section-heading">
+          <div>
+            <span class="site-label">全站模式</span>
+            <strong>保护所有网站</strong>
+          </div>
+          <span class="mode-mark">HTTP · HTTPS</span>
+        </div>
+        <p class="section-copy">首次开启时，Chrome 会请求一次所有网站的访问权限。关闭保护会保留授权，再次开启无需重复确认。</p>
+        <button id="global-toggle" type="button" disabled>读取全站状态…</button>
+        <p id="global-status" class="status" role="status">正在读取全站权限…</p>
       </section>
 
-      <button id="toggle" type="button" disabled>读取站点状态…</button>
-      <p id="status" class="status" role="status">仅对当前站点生效；启用后会重新加载页面。</p>
+      <section class="site-section" aria-live="polite">
+        <div class="section-heading">
+          <div>
+            <span class="site-label">手动模式</span>
+            <strong id="site-name">正在读取…</strong>
+          </div>
+        </div>
+        <span id="site-origin" class="origin"></span>
+        <button id="site-toggle" type="button" disabled>读取站点状态…</button>
+        <p id="site-status" class="status" role="status">仅支持 HTTP / HTTPS 网页。</p>
+      </section>
 
       <details>
         <summary>保护范围与限制</summary>
@@ -29,7 +45,7 @@
         <p>这不会卸载系统字体，也不覆盖 DOM/CSS 字体测量、未知字体名、WebGL 或所有 Canvas 图像读回路径。扩展本身可能被页面识别。</p>
       </details>
 
-      <footer>权限仅在你开启此站点时申请，关闭时撤销。</footer>
+      <footer>权限在你启用全站或单站保护时申请；关闭保护时保留已授予的权限。可在 Chrome 扩展设置中撤销。</footer>
     </main>
   </body>
 </html>

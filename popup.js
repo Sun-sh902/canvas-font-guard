@@ -1,11 +1,23 @@
-const toggleButton = document.querySelector("#toggle");
+const ALL_SITE_ORIGINS = ["http://*/*", "https://*/*"];
+const ALL_SITE_MATCHES = [...ALL_SITE_ORIGINS];
+const GLOBAL_SCRIPT_ID = "canvas-font-guard-global-v1";
+
+const globalToggle = document.querySelector("#global-toggle");
+const globalStatus = document.querySelector("#global-status");
+const siteToggle = document.querySelector("#site-toggle");
 const siteName = document.querySelector("#site-name");
 const siteOrigin = document.querySelector("#site-origin");
-const statusText = document.querySelector("#status");
+const siteStatus = document.querySelector("#site-status");
 
 let currentTab;
 let site;
-let enabled = false;
+let globalEnabled = false;
+let globalPermissionGranted = false;
+let siteEnabled = false;
+let sitePermissionGranted = false;
+let busy = false;
+let globalMessage;
+let siteMessage;
 
 function siteFromUrl(rawUrl) {
   try {
@@ -39,68 +51,153 @@ async function readState() {
   [currentTab] = await chrome.tabs.query({ active: true, currentWindow: true });
   site = siteFromUrl(currentTab?.url ?? "");
 
-  if (!site || typeof currentTab?.id !== "number") {
+  const [scripts, hasGlobalPermission] = await Promise.all([
+    chrome.scripting.getRegisteredContentScripts(),
+    chrome.permissions.contains({ origins: ALL_SITE_ORIGINS })
+  ]);
+
+  const globalScriptExists = scripts.some((script) => script.id === GLOBAL_SCRIPT_ID);
+  globalPermissionGranted = hasGlobalPermission;
+  if (globalScriptExists && !globalPermissionGranted) {
+    // A user may revoke the all-sites permission in Chrome's extension settings.
+    await chrome.scripting.unregisterContentScripts({ ids: [GLOBAL_SCRIPT_ID] });
+  }
+  globalEnabled = globalScriptExists && globalPermissionGranted;
+
+  sitePermissionGranted = false;
+  siteEnabled = false;
+  if (site) {
+    const [siteScripts, hasSitePermission] = await Promise.all([
+      chrome.scripting.getRegisteredContentScripts({ ids: [site.scriptId] }),
+      chrome.permissions.contains({ origins: [site.pattern] })
+    ]);
+    sitePermissionGranted = hasSitePermission;
+    if (siteScripts.length > 0 && !sitePermissionGranted) {
+      // A user may revoke this site's access in Chrome's extension settings.
+      await chrome.scripting.unregisterContentScripts({ ids: [site.scriptId] });
+    }
+    siteEnabled = siteScripts.length > 0 && sitePermissionGranted;
+  }
+
+  renderState();
+}
+
+function renderState(messages = {}) {
+  if (Object.hasOwn(messages, "global")) globalMessage = messages.global;
+  if (Object.hasOwn(messages, "site")) siteMessage = messages.site;
+  globalToggle.disabled = busy;
+  globalToggle.classList.toggle("is-on", globalEnabled);
+  globalToggle.textContent = globalEnabled ? "关闭全站保护" : "开启全站保护";
+  globalStatus.textContent = globalMessage ?? (globalEnabled
+    ? "全站保护已启用。已授权的 HTTP / HTTPS 网页都会运行保护脚本。"
+    : globalPermissionGranted
+      ? "全站保护已关闭，但授权已保留；再次开启无需重新确认。"
+      : "尚未授权。开启时 Chrome 会请求 HTTP / HTTPS 全站权限。");
+
+  if (!site) {
     siteName.textContent = "此页面不支持";
-    siteOrigin.textContent = "仅支持 http / https 网页";
-    toggleButton.textContent = "无法启用";
-    toggleButton.disabled = true;
-    statusText.textContent = "Chrome 内置页面、扩展页和本地文件不在支持范围内。";
+    siteOrigin.textContent = "仅支持 HTTP / HTTPS 网页";
+    siteToggle.textContent = "无法启用";
+    siteToggle.disabled = true;
+    siteToggle.classList.remove("is-on");
+    siteStatus.textContent = "Chrome 内置页面、扩展页和本地文件不在支持范围内。全站开关仍可在网页中使用。";
     return;
   }
 
   siteName.textContent = site.label;
   siteOrigin.textContent = site.key;
+  siteToggle.textContent = siteEnabled ? "关闭此站点保护" : "开启此站点保护";
+  siteToggle.classList.toggle("is-on", siteEnabled);
+  siteToggle.disabled = busy || globalEnabled;
+  siteStatus.textContent = siteMessage ?? (globalEnabled
+    ? "全站保护正在运行，此站点已包含其中。关闭全站开关后可恢复单站控制。"
+    : siteEnabled
+      ? "本站保护已启用。关闭后会保留授权，再次开启无需重新确认。"
+      : sitePermissionGranted
+        ? "本站授权已保留；开启保护时不会再次询问。"
+        : "开启时 Chrome 只会请求此协议和主机的访问权限。");
+}
 
-  const [scripts, hasPermission] = await Promise.all([
-    chrome.scripting.getRegisteredContentScripts({ ids: [site.scriptId] }),
-    chrome.permissions.contains({ origins: [site.pattern] })
-  ]);
-  if (scripts.length > 0 && !hasPermission) {
-    // A user may revoke site access from Chrome's extension settings.
-    await chrome.scripting.unregisterContentScripts({ ids: [site.scriptId] });
-  }
-  enabled = scripts.length > 0 && hasPermission;
+function setBusy(value) {
+  busy = value;
   renderState();
 }
 
-function renderState(message) {
-  toggleButton.disabled = false;
-  toggleButton.classList.toggle("is-on", enabled);
-  toggleButton.textContent = enabled ? "关闭此站点保护" : "开启此站点保护";
-  statusText.textContent = message ?? (enabled
-    ? "保护已启用。字体规则会在此站点后续页面加载时生效。"
-    : "保护未启用。开启时 Chrome 会询问此站点的访问权限。");
+async function reloadCurrentPage() {
+  if (typeof currentTab?.id === "number" && site) {
+    await chrome.tabs.reload(currentTab.id);
+  }
 }
 
-toggleButton.addEventListener("click", async () => {
-  if (!site || typeof currentTab?.id !== "number") return;
-
-  toggleButton.disabled = true;
-  statusText.textContent = enabled ? "正在关闭并重新加载…" : "正在申请站点权限…";
+globalToggle.addEventListener("click", async () => {
+  setBusy(true);
+  renderState({ global: globalEnabled ? "正在关闭全站保护…" : "正在检查全站权限…" });
 
   try {
-    if (enabled) {
-      await chrome.scripting.unregisterContentScripts({ ids: [site.scriptId] });
-      const permissionRemoved = await chrome.permissions.remove({ origins: [site.pattern] });
-      enabled = false;
-      renderState(permissionRemoved
-        ? "已关闭并撤销站点权限。正在重新加载当前页面…"
-        : "保护已关闭；Chrome 未移除站点权限，请在扩展设置中检查。正在重新加载…");
+    if (globalEnabled) {
+      await chrome.scripting.unregisterContentScripts({ ids: [GLOBAL_SCRIPT_ID] });
+      globalEnabled = false;
+      renderState({ global: "全站保护已关闭。授权会保留，再次开启无需重新确认。" });
     } else {
-      // This request is made directly from the toolbar popup button gesture.
-      const granted = await chrome.permissions.request({ origins: [site.pattern] });
+      // Ask directly from the user's toolbar popup click. Chrome does not
+      // prompt again when these optional origins are already granted.
+      const granted = await chrome.permissions.request({ origins: ALL_SITE_ORIGINS });
       if (!granted) {
-        renderState("权限未授予，本站保护没有开启。");
+        globalPermissionGranted = false;
+        renderState({ global: "全站权限未授予，保护没有开启。你仍可使用下方的单站模式。" });
         return;
       }
 
-      // Recover cleanly if Chrome retained a stale registration after access
-      // was manually revoked in extension settings.
+      const previous = await chrome.scripting.getRegisteredContentScripts({ ids: [GLOBAL_SCRIPT_ID] });
+      if (previous.length > 0) {
+        await chrome.scripting.unregisterContentScripts({ ids: [GLOBAL_SCRIPT_ID] });
+      }
+      await chrome.scripting.registerContentScripts([{
+        id: GLOBAL_SCRIPT_ID,
+        matches: ALL_SITE_MATCHES,
+        js: ["guard.js"],
+        runAt: "document_start",
+        world: "MAIN",
+        allFrames: true,
+        persistAcrossSessions: true
+      }]);
+      globalPermissionGranted = true;
+      globalEnabled = true;
+      renderState({ global: "全站保护已开启。全站授权会保留，关闭后再次开启无需重新确认。" });
+    }
+
+    await reloadCurrentPage();
+  } catch (error) {
+    renderState({ global: `操作失败：${error?.message ?? "未知错误"}` });
+  } finally {
+    setBusy(false);
+  }
+});
+
+siteToggle.addEventListener("click", async () => {
+  if (!site || globalEnabled) return;
+  setBusy(true);
+  renderState({ site: siteEnabled ? "正在关闭并重新加载…" : "正在检查本站权限…" });
+
+  try {
+    if (siteEnabled) {
+      await chrome.scripting.unregisterContentScripts({ ids: [site.scriptId] });
+      siteEnabled = false;
+      renderState({ site: "本站保护已关闭。授权会保留，再次开启无需重新确认。" });
+    } else {
+      // Request directly from the toolbar popup gesture. If the site access is
+      // already retained, Chrome resolves this without showing a prompt.
+      const granted = await chrome.permissions.request({ origins: [site.pattern] });
+      if (!granted) {
+        sitePermissionGranted = false;
+        renderState({ site: "本站权限未授予，保护没有开启。" });
+        return;
+      }
+
       const previous = await chrome.scripting.getRegisteredContentScripts({ ids: [site.scriptId] });
       if (previous.length > 0) {
         await chrome.scripting.unregisterContentScripts({ ids: [site.scriptId] });
       }
-
       await chrome.scripting.registerContentScripts([{
         id: site.scriptId,
         matches: [site.pattern],
@@ -110,21 +207,26 @@ toggleButton.addEventListener("click", async () => {
         allFrames: true,
         persistAcrossSessions: true
       }]);
-      enabled = true;
-      renderState("已开启。正在重新加载页面，让脚本从页面脚本运行前生效…");
+      sitePermissionGranted = true;
+      siteEnabled = true;
+      renderState({ site: "本站保护已开启。授权会保留，再次开启无需重新确认。" });
     }
 
-    await chrome.tabs.reload(currentTab.id);
+    await reloadCurrentPage();
   } catch (error) {
-    statusText.textContent = `操作失败：${error?.message ?? "未知错误"}`;
-    toggleButton.disabled = false;
+    renderState({ site: `操作失败：${error?.message ?? "未知错误"}` });
+  } finally {
+    setBusy(false);
   }
 });
 
 readState().catch((error) => {
+  globalToggle.textContent = "无法读取全站状态";
+  globalToggle.disabled = true;
+  globalStatus.textContent = error?.message ?? "无法读取全站权限状态。";
   siteName.textContent = "读取失败";
   siteOrigin.textContent = "";
-  toggleButton.textContent = "无法读取状态";
-  toggleButton.disabled = true;
-  statusText.textContent = error?.message ?? "无法读取当前站点。";
+  siteToggle.textContent = "无法读取状态";
+  siteToggle.disabled = true;
+  siteStatus.textContent = "无法读取当前站点。";
 });
