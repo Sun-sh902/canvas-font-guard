@@ -19,14 +19,14 @@ The matching rules are a targeted list, not a complete CJK font catalog. Matchin
 
 | Category | Example names and aliases |
 | --- | --- |
-| Microsoft | `Microsoft YaHei UI`, `Microsoft YaHei`, `Microsoft JhengHei UI`, `Microsoft JhengHei`, `MicrosoftYaHei`, `MicrosoftJhengHei`, `微软雅黑` (Microsoft YaHei), `微软正黑体` (Microsoft JhengHei) |
-| Apple / macOS | `PingFang SC`, `PingFang TC`, `PingFang HK`, `PingFang`, `PingFangSC`, `PingFangTC`, `苹方` (PingFang), `STHeiti`, `STHeiti SC`, `STSong`, `Songti SC`, `Kaiti SC`, `Hiragino Sans GB`, `华文系列` (ST family), `冬青黑体` (Hiragino Sans GB) |
-| Xiaomi | `MiSans VF`, `MiSans`, `Mi Sans`, `MiSansVF`, `小米兰亭` (Mi Lan Ting), `小米兰亭 Pro` (Mi Lan Ting Pro) |
-| Huawei | `HarmonyOS Sans SC`, `HarmonyOS Sans TC`, `HarmonyOS Sans`, `HarmonyOSSansSC`, `HarmonyOSSans`, `鸿蒙黑体` (HarmonyOS Sans), `Huawei Sans`, `华为鸿蒙字体` (Huawei HarmonyOS font) |
-| Generic CJK / Linux | `Source Han Sans/Serif`, `Noto Sans/Serif CJK`, `思源黑体` (Source Han Sans), `思源宋体` (Source Han Serif), `WenQuanYi Zen Hei`, `WenQuanYi Micro Hei`, `文泉驿` (WenQuanYi) |
-| Other Chinese and vendor fonts | `SimSun`, `NSimSun`, `SimHei`, `KaiTi`, `FangSong`, `等线` (DengXian), `隶书` (LiSu), `幼圆` (YouYuan), `DFKai-SB`, `MingLiU`, `PMingLiU`, `OPPO Sans`, `vivo Sans`, `Alibaba PuHuiTi`, `Tencent Sans`, `DingTalk JinBuTi`, and the corresponding Chinese aliases |
+| Microsoft | `Microsoft YaHei UI`, `Microsoft YaHei`, `Microsoft JhengHei UI`, `Microsoft JhengHei`, `MicrosoftYaHei`, `MicrosoftJhengHei` |
+| Apple / macOS | `PingFang SC`, `PingFang TC`, `PingFang HK`, `PingFang`, `PingFangSC`, `PingFangTC`, `STHeiti`, `STHeiti SC`, `STSong`, `Songti SC`, `Kaiti SC`, `Hiragino Sans GB` |
+| Xiaomi | `MiSans VF`, `MiSans`, `Mi Sans`, `MiSansVF`, `Mi Lan Ting`, `Mi Lan Ting Pro` |
+| Huawei | `HarmonyOS Sans SC`, `HarmonyOS Sans TC`, `HarmonyOS Sans`, `HarmonyOSSansSC`, `HarmonyOSSans`, `Huawei Sans`, `Huawei HarmonyOS font` |
+| Generic CJK / Linux | `Source Han Sans/Serif`, `Noto Sans/Serif CJK`, `Source Han Sans`, `Source Han Serif`, `WenQuanYi Zen Hei`, `WenQuanYi Micro Hei`, `WenQuanYi` |
+| Other Chinese and vendor fonts | `SimSun`, `NSimSun`, `SimHei`, `KaiTi`, `FangSong`, `DengXian`, `LiSu`, `YouYuan`, `DFKai-SB`, `MingLiU`, `PMingLiU`, `OPPO Sans`, `vivo Sans`, `Alibaba PuHuiTi`, `Tencent Sans`, `DingTalk JinBuTi`, and their native aliases |
 
-The complete rules are defined by the `protectedFamilies` list in [`guard.js`](guard.js).
+The complete rules are defined by the `protectedFamilies` list in [`guard.js`](guard.js). Native Chinese aliases are matched verbatim there and are intentionally not transliterated, because the browser and operating system expose those exact family names.
 
 ## Installation
 
