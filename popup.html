@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Canvas 字体保护</title>
+    <title>Canvas Font Guard</title>
     <link rel="stylesheet" href="popup.css">
     <script src="popup.js" defer></script>
   </head>
@@ -11,41 +11,41 @@
     <main class="panel">
       <header class="heading">
         <span class="eyebrow">CANVAS FONT GUARD</span>
-        <h1>字体探测保护</h1>
+        <h1>Font probing protection</h1>
       </header>
 
       <section class="global-section" aria-live="polite">
         <div class="section-heading">
           <div>
-            <span class="site-label">全站模式</span>
-            <strong>保护所有网站</strong>
+            <span class="site-label">GLOBAL MODE</span>
+            <strong>Protect all websites</strong>
           </div>
           <span class="mode-mark">HTTP · HTTPS</span>
         </div>
-        <p class="section-copy">首次开启时，Chrome 会请求一次所有网站的访问权限。关闭保护会保留授权，再次开启无需重复确认。</p>
-        <button id="global-toggle" type="button" disabled>读取全站状态…</button>
-        <p id="global-status" class="status" role="status">正在读取全站权限…</p>
+        <p class="section-copy">The first time you enable this mode, Chrome asks once for access to all websites. Turning protection off keeps the permission, so re-enabling it does not prompt again.</p>
+        <button id="global-toggle" type="button" disabled>Reading global status…</button>
+        <p id="global-status" class="status" role="status">Reading global permission…</p>
       </section>
 
       <section class="site-section" aria-live="polite">
         <div class="section-heading">
           <div>
-            <span class="site-label">手动模式</span>
-            <strong id="site-name">正在读取…</strong>
+            <span class="site-label">MANUAL MODE</span>
+            <strong id="site-name">Reading…</strong>
           </div>
         </div>
         <span id="site-origin" class="origin"></span>
-        <button id="site-toggle" type="button" disabled>读取站点状态…</button>
-        <p id="site-status" class="status" role="status">仅支持 HTTP / HTTPS 网页。</p>
+        <button id="site-toggle" type="button" disabled>Reading site status…</button>
+        <p id="site-status" class="status" role="status">Only HTTP / HTTPS pages are supported.</p>
       </section>
 
       <details>
-        <summary>保护范围与限制</summary>
-        <p>Canvas 2D 与 OffscreenCanvas 中，命中的字体名会改为不存在的内部字体名，让浏览器使用候选字体栈中的普通回退字体。支持时也会从本地字体枚举结果中滤除命中字体。</p>
-        <p>这不会卸载系统字体，也不覆盖 DOM/CSS 字体测量、未知字体名、WebGL 或所有 Canvas 图像读回路径。扩展本身可能被页面识别。</p>
+        <summary>Scope and limitations</summary>
+        <p>In Canvas 2D and OffscreenCanvas, matching font names are replaced with a nonexistent internal family name so the browser uses a normal fallback from the candidate font stack. Matching fonts are also filtered from local font enumeration results when the API is available.</p>
+        <p>This does not uninstall system fonts, and it does not cover DOM/CSS font measurement, unknown font names, WebGL, or every Canvas image readback path. Pages may detect the extension itself.</p>
       </details>
 
-      <footer>权限在你启用全站或单站保护时申请；关闭保护时保留已授予的权限。可在 Chrome 扩展设置中撤销。</footer>
+      <footer>Permissions are requested when you enable global or per-site protection; granted permissions remain when protection is turned off. You can revoke them in Chrome's extension settings.</footer>
     </main>
   </body>
 </html>

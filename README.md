@@ -1,109 +1,109 @@
 # Canvas Font Guard
 
-**可全站或按站点启用的 Chrome 字体探测缓解扩展。** Canvas Font Guard 会在页面运行前处理 Canvas 2D 中的部分已知中文及厂商字体名，并在适用时过滤 Chrome 本地字体枚举 API 的结果。扩展采用 Chrome Manifest V3，不需要构建步骤。
+**A Chrome extension that mitigates font probing, either across all sites or per site.** Canvas Font Guard handles a set of known Chinese and vendor font family names in Canvas 2D before page scripts run, and filters the results of Chrome's Local Font Access API where applicable. It uses Chrome Manifest V3 and requires no build step.
 
-> 这是一个范围有限的隐私工具。它不能保证隐藏系统中存在中文字体，也不能让浏览器指纹变成匿名或不可识别。请阅读下方的[保护范围与限制](#保护范围与限制)。
+> This is a privacy tool with a deliberately narrow scope. It cannot guarantee that Chinese fonts are hidden from a system, and it does not make a browser fingerprint anonymous or unrecognizable. Read [Scope and limitations](#scope-and-limitations) below.
 
-## 功能
+## Features
 
-- **全站开关**：可一次授权所有 HTTP / HTTPS 网站并持续保护；关闭开关只停用全站脚本，不撤销授权，再次开启不会重复询问。
-- **手动站点开关**：也可以只保护当前站点。关闭单站保护时保留该站点授权，再次开启无需重复询问。全站模式开启时，单站开关暂时停用；之前的单站设置会保留。
-- **Canvas 2D 字体名映射**：在 `CanvasRenderingContext2D` 和 `OffscreenCanvasRenderingContext2D` 中，将匹配的已知字体名映射为内部不存在的字体名，使 Canvas 使用页面字体栈的回退字体。
-- **本地字体枚举过滤**：当 `queryLocalFonts()` 可用时，对该 API 返回的 `family`、`fullName` 和 `postscriptName` 字段过滤匹配项；原生 API 的安全上下文和用户授权要求仍由 Chrome 决定。
-- **页面开始时生效**：注册的脚本以 `document_start`、主世界运行，并覆盖匹配站点的框架；启用或关闭时会重新加载当前标签页。
-- **按需权限**：安装时不授予网站访问权。用户开启全站模式时，扩展请求 `http://*/*` 和 `https://*/*`；手动模式仅请求当前协议和主机。关闭保护只注销对应脚本，授权会保留，直到用户在 Chrome 扩展设置中撤销。
+- **Global toggle**: Grant access to all HTTP / HTTPS sites once and keep protection running. Turning the toggle off only unregisters the global script; it does not revoke the permission, so turning it back on does not prompt again.
+- **Per-site toggle**: Protect only the current site. Turning protection off keeps that site's permission, so re-enabling it does not prompt again. While global mode is on, the per-site toggle is temporarily disabled; existing per-site settings are retained.
+- **Canvas 2D font-name mapping**: In `CanvasRenderingContext2D` and `OffscreenCanvasRenderingContext2D`, matching known family names are mapped to an internal family name that does not exist, causing Canvas to use a fallback font from the page's font stack.
+- **Local font enumeration filtering**: When `queryLocalFonts()` is available, matching entries are removed from the `family`, `fullName`, and `postscriptName` fields returned by the API. Chrome still controls the API's secure-context and user-permission requirements.
+- **Active from the start of the page**: Registered scripts run in the main world at `document_start` and cover frames on matching sites. Toggling protection reloads the current tab.
+- **On-demand permissions**: No site access is granted at install time. When global mode is enabled, the extension requests `http://*/*` and `https://*/*`; manual mode requests only the current scheme and host. Turning protection off unregisters the corresponding script but keeps the permission until the user revokes it in Chrome's extension settings.
 
-## 当前匹配的字体名
+## Font names matched today
 
-匹配规则是有针对性的名单，不代表完整的 CJK 字体目录。大小写不敏感。规则以字体家族名为目标；名称边界、空格和 CSS 字体列表等实际输入形式可能影响命中。
+The matching rules are a targeted list, not a complete CJK font catalog. Matching is case-insensitive. Rules target font family names; the exact input form—name boundaries, spacing, and the surrounding CSS font list—can affect whether a name matches.
 
-| 类别 | 名单示例及别名 |
+| Category | Example names and aliases |
 | --- | --- |
-| 微软 | `Microsoft YaHei UI`、`Microsoft YaHei`、`Microsoft JhengHei UI`、`Microsoft JhengHei`、`MicrosoftYaHei`、`MicrosoftJhengHei`、微软雅黑、微软正黑体 |
-| Apple / macOS | `PingFang SC`、`PingFang TC`、`PingFang HK`、`PingFang`、`PingFangSC`、`PingFangTC`、苹方、`STHeiti`、`STHeiti SC`、`STSong`、`Songti SC`、`Kaiti SC`、`Hiragino Sans GB`、华文系列、冬青黑体 |
-| 小米 | `MiSans VF`、`MiSans`、`Mi Sans`、`MiSansVF`、小米兰亭、小米兰亭 Pro |
-| 华为 | `HarmonyOS Sans SC`、`HarmonyOS Sans TC`、`HarmonyOS Sans`、`HarmonyOSSansSC`、`HarmonyOSSans`、鸿蒙黑体、`Huawei Sans`、华为鸿蒙字体 |
-| CJK 通用 / Linux | `Source Han Sans/Serif`、`Noto Sans/Serif CJK`、思源黑体、思源宋体、`WenQuanYi Zen Hei`、`WenQuanYi Micro Hei`、文泉驿 |
-| 其他中文及厂商字体 | `SimSun`、`NSimSun`、`SimHei`、`KaiTi`、`FangSong`、等线、隶书、幼圆、`DFKai-SB`、`MingLiU`、`PMingLiU`、`OPPO Sans`、`vivo Sans`、`Alibaba PuHuiTi`、`Tencent Sans`、`DingTalk JinBuTi` 及相应中文别名 |
+| Microsoft | `Microsoft YaHei UI`, `Microsoft YaHei`, `Microsoft JhengHei UI`, `Microsoft JhengHei`, `MicrosoftYaHei`, `MicrosoftJhengHei`, `微软雅黑` (Microsoft YaHei), `微软正黑体` (Microsoft JhengHei) |
+| Apple / macOS | `PingFang SC`, `PingFang TC`, `PingFang HK`, `PingFang`, `PingFangSC`, `PingFangTC`, `苹方` (PingFang), `STHeiti`, `STHeiti SC`, `STSong`, `Songti SC`, `Kaiti SC`, `Hiragino Sans GB`, `华文系列` (ST family), `冬青黑体` (Hiragino Sans GB) |
+| Xiaomi | `MiSans VF`, `MiSans`, `Mi Sans`, `MiSansVF`, `小米兰亭` (Mi Lan Ting), `小米兰亭 Pro` (Mi Lan Ting Pro) |
+| Huawei | `HarmonyOS Sans SC`, `HarmonyOS Sans TC`, `HarmonyOS Sans`, `HarmonyOSSansSC`, `HarmonyOSSans`, `鸿蒙黑体` (HarmonyOS Sans), `Huawei Sans`, `华为鸿蒙字体` (Huawei HarmonyOS font) |
+| Generic CJK / Linux | `Source Han Sans/Serif`, `Noto Sans/Serif CJK`, `思源黑体` (Source Han Sans), `思源宋体` (Source Han Serif), `WenQuanYi Zen Hei`, `WenQuanYi Micro Hei`, `文泉驿` (WenQuanYi) |
+| Other Chinese and vendor fonts | `SimSun`, `NSimSun`, `SimHei`, `KaiTi`, `FangSong`, `等线` (DengXian), `隶书` (LiSu), `幼圆` (YouYuan), `DFKai-SB`, `MingLiU`, `PMingLiU`, `OPPO Sans`, `vivo Sans`, `Alibaba PuHuiTi`, `Tencent Sans`, `DingTalk JinBuTi`, and the corresponding Chinese aliases |
 
-完整规则以 [`guard.js`](guard.js) 中的 `protectedFamilies` 列表为准。
+The complete rules are defined by the `protectedFamilies` list in [`guard.js`](guard.js).
 
-## 安装
+## Installation
 
-### 从 GitHub 下载
+### Download from GitHub
 
-1. 在本仓库页面选择 **Code → Download ZIP**，解压文件。
-2. 在 Chrome 地址栏打开 `chrome://extensions`。
-3. 打开页面右上方的**开发者模式**。
-4. 点击**加载已解压的扩展程序**，选择解压得到的 `chrome-font-guard` 文件夹（即包含 `manifest.json` 的目录）。
+1. On this repository's page, choose **Code → Download ZIP** and extract the archive.
+2. Open `chrome://extensions` in Chrome's address bar.
+3. Turn on **Developer mode** in the upper-right corner of the page.
+4. Click **Load unpacked** and select the extracted folder that contains `manifest.json`.
 
-Chrome 扩展的未打包开发版本需要开发者模式。此项目没有安装程序，也不会修改或卸载操作系统字体。
+Chrome requires Developer mode to load an unpacked development build of an extension. This project has no installer and does not modify or uninstall operating-system fonts.
 
-## 如何使用
+## Usage
 
-如果工具栏上看不到 Canvas Font Guard，先点击 Chrome 工具栏的扩展程序（拼图）按钮，将它固定到工具栏，之后就可以直接打开扩展弹窗。
+If Canvas Font Guard is not visible on the toolbar, click Chrome's Extensions (puzzle-piece) button and pin it to the toolbar; you can then open the popup directly.
 
-### 保护所有网站
+### Protect all websites
 
-1. 点击 Chrome 工具栏中的 Canvas Font Guard 图标。
-2. 点击**开启全站保护**，并在 Chrome 的确认提示中允许访问所有网站。
-3. 授权后扩展会注册全站脚本并重新加载当前网页。之后打开的 HTTP / HTTPS 网页会自动应用保护，不需要逐站点击。
+1. Click the Canvas Font Guard icon in Chrome's toolbar.
+2. Click **Enable global protection**, then allow access to all websites in Chrome's confirmation prompt.
+3. After permission is granted, the extension registers the global script and reloads the current page. HTTP / HTTPS pages opened afterward are protected automatically, with no need to click through each site.
 
-全站授权通常只需确认一次。点击**关闭全站保护**会停止全站脚本，但保留授权；之后重新开启无需重复确认。要撤销授权，可在 `chrome://extensions` 中打开 Canvas Font Guard 的详情页管理网站访问权限。
+Global permission normally needs to be confirmed only once. Clicking **Disable global protection** stops the global script but keeps the permission, so re-enabling it does not prompt again. To revoke access, open Canvas Font Guard's details page in `chrome://extensions` and manage its site access.
 
-### 只保护当前站点
+### Protect only the current site
 
-1. 确保**全站保护**已关闭，然后打开要保护的 `http://` 或 `https://` 网页。
-2. 点击工具栏中的 Canvas Font Guard 图标，再点击**开启此站点保护**。
-3. 第一次启用该站点时，在 Chrome 权限提示中允许访问。之后关闭再开启无需重复确认。
+1. Make sure **global protection** is off, then open the `http://` or `https://` page you want to protect.
+2. Click the Canvas Font Guard icon in the toolbar, then click **Enable protection for this site**.
+3. The first time you enable this site, allow access in Chrome's permission prompt. Turning protection off and back on later does not prompt again.
 
-单站保护适用于当前**协议 + 主机名**。Chrome 的主机匹配规则不区分端口，因此同一协议、同一主机下的不同端口共用开关；HTTP 和 HTTPS 分别授权。Chrome 内置页面、扩展页面和 `file://` 页面不支持手动模式。
+Per-site protection applies to the current **scheme + hostname**. Chrome's host matching rules ignore ports, so different ports on the same scheme and host share one toggle; HTTP and HTTPS are authorized separately. Chrome's built-in pages, extension pages, and `file://` pages do not support manual mode.
 
-### 关闭保护与刷新页面
+### Turning protection off and reloading pages
 
-- 在弹窗点击**关闭全站保护**可停用全站脚本；关闭**此站点保护**可停用当前站点脚本。关闭不会自动撤销已授予的权限，因此再次开启时无需重复授权。
-- 全站和单站设置可以共存。全站开启时单站开关会暂时禁用；关闭全站后，之前单独启用的站点仍会按原设置保护。
-- 切换开关后，当前支持的网页会自动重新加载；其他已经打开的标签页需要手动刷新，保护状态才会更新。
-- 如果要停止所有站点的保护，先关闭全站保护，再逐个关闭仍启用的单站保护；要撤销访问授权，请到 `chrome://extensions` 的扩展详情页管理。
+- Clicking **Disable global protection** in the popup stops the global script; turning off **protection for this site** stops the script for the current site. Turning protection off does not automatically revoke granted permissions, so re-enabling it does not require authorization again.
+- Global and per-site settings can coexist. While global mode is on, the per-site toggle is temporarily disabled; after global mode is turned off, sites that were previously enabled individually remain protected by their own settings.
+- Switching a toggle automatically reloads the current supported page. Other open tabs must be refreshed manually before their protection state updates.
+- To stop protecting all sites, turn off global protection first, then turn off each per-site protection that is still enabled. To revoke access, manage the extension's permissions on its details page in `chrome://extensions`.
 
-## 权限说明
+## Permissions
 
-| 权限 | 用途 |
+| Permission | Purpose |
 | --- | --- |
-| `activeTab` | 用户点击扩展图标后读取当前标签页地址，以确定弹窗显示和操作的站点。 |
-| `scripting` | 在用户选择启用的站点注册 `document_start` 脚本。 |
-| 可选的 `http://*/*` 和 `https://*/*` 主机权限 | 全站模式启用时请求 HTTP / HTTPS 全站访问权；手动模式启用时只请求当前协议和主机。安装时不会自动授权。关闭保护只停用对应脚本并保留授权；用户可在 Chrome 扩展详情页撤销。 |
+| `activeTab` | Reads the current tab's address after the user clicks the extension icon, so the popup can show and act on the right site. |
+| `scripting` | Registers the `document_start` script on sites the user chooses to enable. |
+| Optional `http://*/*` and `https://*/*` host permissions | Requested for all HTTP / HTTPS sites when global mode is enabled; in manual mode, only the current scheme and host are requested. Nothing is granted automatically at install time. Turning protection off only unregisters the corresponding script and keeps the permission; the user can revoke it on Chrome's extension details page. |
 
-扩展不使用 `storage`、cookies、历史记录、书签、下载或网络请求权限。保护状态由 Chrome 保存的内容脚本注册表示；已授予的主机权限在保护关闭后保留，避免重复授权提示。
+The extension does not use `storage`, cookies, history, bookmarks, downloads, or network-request permissions. Protection state is represented by the content-script registrations Chrome stores. Granted host permissions remain after protection is turned off to avoid repeated authorization prompts.
 
-## 工作方式
+## How it works
 
-脚本在页面主世界包装 Canvas 2D 上下文的 `font` 属性。页面设置字体时，扩展把名单中的家族名替换为一个内部占位家族名，再交给浏览器解析。由于该占位名并不存在，浏览器会沿用页面字体声明中其余可用家族进行回退。包装后的读取器保留页面最初设置的字体字符串；实际 Canvas 绘制和测量使用浏览器解析后的字体。
+The script wraps the `font` property of Canvas 2D contexts in the page's main world. When the page sets a font, the extension replaces a listed family name with an internal placeholder family name before handing the value to the browser. Because that placeholder does not exist, the browser falls back to the remaining available families in the page's font declaration. The wrapped getter returns the font string the page originally set; actual Canvas drawing and measurement use the font as resolved by the browser.
 
-如果页面提供并能调用 `queryLocalFonts()`，扩展会在原生 Promise 返回后过滤匹配的本地字体条目。扩展不授予该 API 所需的额外权限，也不会绕过 Chrome 的字体访问提示。
+If the page provides a callable `queryLocalFonts()`, the extension filters matching local font entries after the native promise resolves. It does not grant any additional permission the API requires, and it does not bypass Chrome's font-access prompt.
 
-## 保护范围与限制
+## Scope and limitations
 
-- **不会隐藏系统字体本身。** 扩展不卸载、重命名、隔离或替换 macOS、Windows 或 Linux 中的字体。
-- **不会移除中文字形。** 如果浏览器需要绘制中文字符，系统 CJK 回退字体仍可能被使用；绘制结果、像素数据或字体度量仍可能暴露环境特征。
-- **不是完整的反指纹方案。** DOM/CSS 字体测量、未列入名单的字体、其他 Canvas 路径、WebGL、系统语言、浏览器差异及其他指纹信号不在本扩展的覆盖范围内。
-- **页面可能发现扩展的包装。** JavaScript API 行为与原生实现的差异可能被探测；扩展不承诺对抗专门针对它的检测。
-- **回退字体会影响页面呈现。** 映射命中后，页面可能使用不同的字形、宽度或排版。字体回退行为由浏览器和页面的字体栈决定。
-- **生效时机有限。** 动态注册的脚本从重新加载后的新文档开始运行，不能追溯修改页面加载前已经产生的结果。
-- **本地字体过滤有条件。** 只有该 API 存在并可由页面调用时才包装其结果，且其他字体枚举途径不受影响。
+- **It does not hide system fonts themselves.** The extension does not uninstall, rename, isolate, or replace fonts on macOS, Windows, or Linux.
+- **It does not remove Chinese glyphs.** If the browser needs to draw Chinese characters, the system's CJK fallback fonts may still be used; rendered output, pixel data, and font metrics can still reveal environment characteristics.
+- **It is not a complete anti-fingerprinting solution.** DOM/CSS font measurement, unlisted font names, other Canvas paths, WebGL, system language, browser differences, and other fingerprinting signals are outside this extension's coverage.
+- **Pages may detect the extension's wrappers.** Differences between JavaScript API behavior and native implementations can be probed; the extension makes no promise of resisting detection aimed specifically at it.
+- **Fallback fonts can affect page rendering.** When a name is remapped, the page may use different glyphs, widths, or typography. Font fallback behavior is determined by the browser and the page's font stack.
+- **The timing of protection is limited.** Dynamically registered scripts start with a new document after a reload and cannot retroactively change results produced before the page loaded.
+- **Local font filtering is conditional.** Results are wrapped only when the API exists and the page can call it, and other font-enumeration paths are unaffected.
 
-## 隐私
+## Privacy
 
-扩展在本机运行，不包含遥测、广告、远程代码或向开发者服务器发送数据的功能。启用保护时，Chrome 会保存相应的主机授权和内容脚本注册；关闭全站或单站开关会停止相应保护脚本，但授权仍留在 Chrome 中，用户可在扩展设置中撤销。
+The extension runs locally and contains no telemetry, advertising, remote code, or functionality that sends data to a developer server. When protection is enabled, Chrome stores the corresponding host permission and content-script registration. Turning off global or per-site protection stops the corresponding protection script, but the permission remains in Chrome until the user revokes it in the extension settings.
 
-## 开发与检查
+## Development and checks
 
-扩展是原生 Manifest V3 文件，不需要打包器或依赖安装。修改后可在 `chrome://extensions` 点击扩展卡片上的刷新按钮，再重新加载目标网页。
+The extension consists of plain Manifest V3 files and needs no bundler or dependency installation. After making changes, click the refresh button on the extension card in `chrome://extensions`, then reload the target page.
 
-- [`manifest.json`](manifest.json)：扩展元数据、权限和弹窗配置。
-- [`popup.html`](popup.html)、[`popup.css`](popup.css)、[`popup.js`](popup.js)：全站和逐站点权限与开关界面。
-- [`guard.js`](guard.js)：字体名单与页面上下文保护逻辑。
+- [`manifest.json`](manifest.json): extension metadata, permissions, and popup configuration.
+- [`popup.html`](popup.html), [`popup.css`](popup.css), [`popup.js`](popup.js): the global and per-site permission and toggle interface.
+- [`guard.js`](guard.js): the font list and page-context protection logic.
 
-## 许可证
+## License
 
-本项目以 [MIT License](LICENSE) 发布。
+This project is released under the [MIT License](LICENSE).

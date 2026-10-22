@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Canvas Font Guard",
   "version": "1.1.0",
-  "description": "按站点或全站弱化 Canvas 中已知中文与厂商字体的可探测性。",
+  "description": "Reduce the detectability of known Chinese and vendor fonts in Canvas, per site or across all sites.",
   "minimum_chrome_version": "102",
   "permissions": [
     "activeTab",
@@ -13,7 +13,7 @@
     "https://*/*"
   ],
   "action": {
-    "default_title": "Canvas 字体保护",
+    "default_title": "Canvas Font Guard",
     "default_popup": "popup.html"
   }
 }
