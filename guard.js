@@ -7,6 +7,8 @@
   const fallbackFamily = "__CanvasFontGuardAbsent_6F2D4A9B__";
 
   // This is a targeted list, not a claim that every CJK font family is known.
+  // Native Chinese family-name aliases are kept verbatim: matching must use the
+  // exact names the OS and browser expose, so translating them would break it.
   const protectedFamilies = [
     "Microsoft YaHei UI", "Microsoft YaHei", "Microsoft JhengHei UI", "Microsoft JhengHei",
     "微软雅黑", "微软正黑体", "MicrosoftYaHei", "MicrosoftJhengHei",
