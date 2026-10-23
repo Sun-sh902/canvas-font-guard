@@ -7,45 +7,67 @@
     <link rel="stylesheet" href="popup.css">
     <script src="popup.js" defer></script>
   </head>
-  <body>
+  <body data-state="loading">
+    <div class="aurora" aria-hidden="true">
+      <span class="blob blob-a"></span>
+      <span class="blob blob-b"></span>
+      <span class="blob blob-c"></span>
+    </div>
+    <div class="grain" aria-hidden="true"></div>
+
     <main class="panel">
-      <header class="heading">
-        <span class="eyebrow">CANVAS FONT GUARD</span>
-        <h1>Font probing protection</h1>
+      <header class="masthead">
+        <img class="mark" src="icons/icon-48.png" width="28" height="28" alt="">
+        <span class="wordmark">Canvas Font Guard</span>
+        <span class="edition">No.&nbsp;1.2</span>
       </header>
 
-      <section class="global-section" aria-live="polite">
-        <div class="section-heading">
-          <div>
-            <span class="site-label">GLOBAL MODE</span>
-            <strong>Protect all websites</strong>
-          </div>
-          <span class="mode-mark">HTTP · HTTPS</span>
-        </div>
-        <p class="section-copy">The first time you enable this mode, Chrome asks once for access to all websites. Turning protection off keeps the permission, so re-enabling it does not prompt again.</p>
-        <button id="global-toggle" type="button" disabled>Reading global status…</button>
-        <p id="global-status" class="status" role="status">Reading global permission…</p>
+      <section class="hero" aria-live="polite">
+        <span class="specimen" aria-hidden="true">Aa<em>字</em></span>
+        <p id="hero-kicker" class="kicker">Reading state</p>
+        <h1 id="hero-title">One moment…</h1>
+        <p id="hero-copy" class="hero-copy">Checking which sites are protected.</p>
       </section>
 
-      <section class="site-section" aria-live="polite">
-        <div class="section-heading">
-          <div>
-            <span class="site-label">MANUAL MODE</span>
-            <strong id="site-name">Reading…</strong>
+      <section class="card" aria-labelledby="global-title">
+        <div class="card-row">
+          <div class="card-text">
+            <span class="numeral">I</span>
+            <div>
+              <strong id="global-title">Every website</strong>
+              <span class="meta">HTTP · HTTPS</span>
+            </div>
           </div>
+          <button id="global-toggle" class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="global-title" disabled>
+            <span class="thumb"></span>
+          </button>
         </div>
-        <span id="site-origin" class="origin"></span>
-        <button id="site-toggle" type="button" disabled>Reading site status…</button>
+        <p id="global-status" class="status" role="status">Reading all-sites permission…</p>
+      </section>
+
+      <section class="card" aria-labelledby="site-name">
+        <div class="card-row">
+          <div class="card-text">
+            <span class="numeral">II</span>
+            <div class="site-text">
+              <strong id="site-name">Reading…</strong>
+              <span id="site-origin" class="meta"></span>
+            </div>
+          </div>
+          <button id="site-toggle" class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="site-name" disabled>
+            <span class="thumb"></span>
+          </button>
+        </div>
         <p id="site-status" class="status" role="status">Only HTTP / HTTPS pages are supported.</p>
       </section>
 
       <details>
-        <summary>Scope and limitations</summary>
-        <p>In Canvas 2D and OffscreenCanvas, matching font names are replaced with a nonexistent internal family name so the browser uses a normal fallback from the candidate font stack. Matching fonts are also filtered from local font enumeration results when the API is available.</p>
-        <p>This does not uninstall system fonts, and it does not cover DOM/CSS font measurement, unknown font names, WebGL, or every Canvas image readback path. Pages may detect the extension itself.</p>
+        <summary><span>Scope &amp; limits</span></summary>
+        <p>In Canvas 2D and OffscreenCanvas, matching family names are swapped for a nonexistent internal name, so the browser falls back to ordinary fonts in the stack. Where available, matching fonts are also filtered out of local font enumeration.</p>
+        <p>System fonts are not uninstalled. DOM/CSS font metrics, unlisted families, WebGL and every canvas readback path remain outside scope, and pages may detect the extension itself.</p>
       </details>
 
-      <footer>Permissions are requested when you enable global or per-site protection; granted permissions remain when protection is turned off. You can revoke them in Chrome's extension settings.</footer>
+      <footer>Site access is requested only when you switch protection on, and is kept when you switch it off. Revoke it anytime in Chrome’s extension settings.</footer>
     </main>
   </body>
 </html>
