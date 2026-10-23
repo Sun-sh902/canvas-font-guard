@@ -1,23 +1,37 @@
-# Canvas Font Guard
+<p align="center">
+  <img src="icons/icon-128.png" width="96" height="96" alt="Canvas Font Guard icon">
+</p>
 
-**A Chrome extension that mitigates font probing, either across all sites or per site.** Canvas Font Guard handles a set of known Chinese and vendor font family names in Canvas 2D before page scripts run, and filters the results of Chrome's Local Font Access API where applicable. It uses Chrome Manifest V3 and requires no build step.
+<h1 align="center">Canvas Font Guard</h1>
 
-> This is a privacy tool with a deliberately narrow scope. It cannot guarantee that Chinese fonts are hidden from a system, and it does not make a browser fingerprint anonymous or unrecognizable. Read [Scope and limitations](#scope-and-limitations) below.
+<p align="center"><em>Draw a veil over the typefaces your browser can be fingerprinted by.</em></p>
+
+<p align="center">
+  <img src="docs/popup-unguarded.png" width="260" alt="Popup, unguarded">
+  &nbsp;
+  <img src="docs/popup-guarded.png" width="260" alt="Popup, guarding every site">
+  &nbsp;
+  <img src="docs/popup-light.png" width="260" alt="Popup in light mode, guarding one site">
+</p>
+
+**A Chrome extension that mitigates Canvas font probing, on every site or one site at a time.** Before page scripts run, Canvas Font Guard rewrites a targeted list of known CJK and vendor font names in Canvas 2D, and filters matching entries out of Chrome’s local font enumeration API where it applies. It is a plain Manifest V3 extension with no build step.
+
+> This is a narrowly scoped privacy tool. It cannot guarantee that Chinese fonts on your system stay hidden, and it does not make your browser fingerprint anonymous. Please read [Scope and limits](#scope-and-limits).
 
 ## Features
 
-- **Global toggle**: Grant access to all HTTP / HTTPS sites once and keep protection running. Turning the toggle off only unregisters the global script; it does not revoke the permission, so turning it back on does not prompt again.
-- **Per-site toggle**: Protect only the current site. Turning protection off keeps that site's permission, so re-enabling it does not prompt again. While global mode is on, the per-site toggle is temporarily disabled; existing per-site settings are retained.
-- **Canvas 2D font-name mapping**: In `CanvasRenderingContext2D` and `OffscreenCanvasRenderingContext2D`, matching known family names are mapped to an internal family name that does not exist, causing Canvas to use a fallback font from the page's font stack.
-- **Local font enumeration filtering**: When `queryLocalFonts()` is available, matching entries are removed from the `family`, `fullName`, and `postscriptName` fields returned by the API. Chrome still controls the API's secure-context and user-permission requirements.
-- **Active from the start of the page**: Registered scripts run in the main world at `document_start` and cover frames on matching sites. Toggling protection reloads the current tab.
-- **On-demand permissions**: No site access is granted at install time. When global mode is enabled, the extension requests `http://*/*` and `https://*/*`; manual mode requests only the current scheme and host. Turning protection off unregisters the corresponding script but keeps the permission until the user revokes it in Chrome's extension settings.
+- **All-sites switch.** Grant access to every HTTP / HTTPS site once and stay protected. Switching off only stops the all-sites script; access is retained, so switching back on won’t prompt again.
+- **Per-site switch.** Or protect just the current site. Switching it off keeps that site’s access, so re-enabling won’t prompt. While the all-sites switch is on, the per-site switch is paused and its previous setting is kept.
+- **Canvas 2D font remapping.** In `CanvasRenderingContext2D` and `OffscreenCanvasRenderingContext2D`, matching family names are mapped to a nonexistent internal family, so Canvas falls back to the rest of the page’s font stack.
+- **Local font enumeration filtering.** When `queryLocalFonts()` is available, entries whose `family`, `fullName` or `postscriptName` match are filtered out. Chrome still enforces the API’s secure-context and permission requirements.
+- **Runs at document start.** Registered scripts run at `document_start` in the main world, in all frames of matching sites. The current tab reloads when you toggle protection.
+- **On-demand permissions.** No site access is granted at install. The all-sites switch requests `http://*/*` and `https://*/*`; the per-site switch requests only the current scheme and host. Switching off unregisters the script but keeps access until you revoke it in Chrome’s extension settings.
 
-## Font names matched today
+## Matched font names
 
-The matching rules are a targeted list, not a complete CJK font catalog. Matching is case-insensitive. Rules target font family names; the exact input form—name boundaries, spacing, and the surrounding CSS font list—can affect whether a name matches.
+The match list is targeted; it is not a complete catalogue of CJK fonts. Matching is case-insensitive and targets family names. Name boundaries, spacing and the shape of CSS font lists can affect whether a name matches.
 
-| Category | Example names and aliases |
+| Group | Examples and aliases |
 | --- | --- |
 | Microsoft | `Microsoft YaHei UI`, `Microsoft YaHei`, `Microsoft JhengHei UI`, `Microsoft JhengHei`, `MicrosoftYaHei`, `MicrosoftJhengHei` |
 | Apple / macOS | `PingFang SC`, `PingFang TC`, `PingFang HK`, `PingFang`, `PingFangSC`, `PingFangTC`, `STHeiti`, `STHeiti SC`, `STSong`, `Songti SC`, `Kaiti SC`, `Hiragino Sans GB` |
@@ -26,84 +40,85 @@ The matching rules are a targeted list, not a complete CJK font catalog. Matchin
 | Generic CJK / Linux | `Source Han Sans/Serif`, `Noto Sans/Serif CJK`, `Source Han Sans`, `Source Han Serif`, `WenQuanYi Zen Hei`, `WenQuanYi Micro Hei`, `WenQuanYi` |
 | Other Chinese and vendor fonts | `SimSun`, `NSimSun`, `SimHei`, `KaiTi`, `FangSong`, `DengXian`, `LiSu`, `YouYuan`, `DFKai-SB`, `MingLiU`, `PMingLiU`, `OPPO Sans`, `vivo Sans`, `Alibaba PuHuiTi`, `Tencent Sans`, `DingTalk JinBuTi`, and their native aliases |
 
-The complete rules are defined by the `protectedFamilies` list in [`guard.js`](guard.js). Native Chinese aliases are matched verbatim there and are intentionally not transliterated, because the browser and operating system expose those exact family names.
+The authoritative list is `protectedFamilies` in [`guard.js`](guard.js). Native Chinese aliases are matched verbatim there and are intentionally not transliterated, because the browser and operating system expose those exact family names.
 
-## Installation
+## Install
 
-### Download from GitHub
+### From GitHub
 
-1. On this repository's page, choose **Code → Download ZIP** and extract the archive.
-2. Open `chrome://extensions` in Chrome's address bar.
-3. Turn on **Developer mode** in the upper-right corner of the page.
-4. Click **Load unpacked** and select the extracted folder that contains `manifest.json`.
+1. On this repository page choose **Code → Download ZIP** and unzip it.
+2. Open `chrome://extensions` in Chrome.
+3. Turn on **Developer mode** in the top-right corner.
+4. Click **Load unpacked** and select the extracted folder (the one containing `manifest.json`).
 
-Chrome requires Developer mode to load an unpacked development build of an extension. This project has no installer and does not modify or uninstall operating-system fonts.
+Unpacked extensions require Developer mode. There is no installer, and the extension never modifies or removes operating-system fonts.
 
 ## Usage
 
-If Canvas Font Guard is not visible on the toolbar, click Chrome's Extensions (puzzle-piece) button and pin it to the toolbar; you can then open the popup directly.
+If Canvas Font Guard isn’t visible in the toolbar, click Chrome’s Extensions (puzzle piece) button and pin it.
 
-### Protect all websites
+### Protect every site
 
-1. Click the Canvas Font Guard icon in Chrome's toolbar.
-2. Click **Enable global protection**, then allow access to all websites in Chrome's confirmation prompt.
-3. After permission is granted, the extension registers the global script and reloads the current page. HTTP / HTTPS pages opened afterward are protected automatically, with no need to click through each site.
+1. Click the Canvas Font Guard icon in the toolbar.
+2. Turn on **I · Every website** and allow access to all sites when Chrome asks.
+3. The extension registers the all-sites script and reloads the current page. Every HTTP / HTTPS page you open afterwards is protected automatically.
 
-Global permission normally needs to be confirmed only once. Clicking **Disable global protection** stops the global script but keeps the permission, so re-enabling it does not prompt again. To revoke access, open Canvas Font Guard's details page in `chrome://extensions` and manage its site access.
+You usually confirm the all-sites permission only once. Switching it off stops the script but keeps the permission, so switching on again won’t ask. To revoke access, open Canvas Font Guard’s details page in `chrome://extensions`.
 
 ### Protect only the current site
 
-1. Make sure **global protection** is off, then open the `http://` or `https://` page you want to protect.
-2. Click the Canvas Font Guard icon in the toolbar, then click **Enable protection for this site**.
-3. The first time you enable this site, allow access in Chrome's permission prompt. Turning protection off and back on later does not prompt again.
+1. Make sure **Every website** is off, then open the `http://` or `https://` page you want to protect.
+2. Open the popup and turn on **II · ⟨hostname⟩**.
+3. Allow access the first time Chrome asks. Later toggles won’t prompt again.
 
-Per-site protection applies to the current **scheme + hostname**. Chrome's host matching rules ignore ports, so different ports on the same scheme and host share one toggle; HTTP and HTTPS are authorized separately. Chrome's built-in pages, extension pages, and `file://` pages do not support manual mode.
+The per-site switch applies to the current **scheme + hostname**. Chrome host patterns ignore ports, so different ports on the same scheme and host share one switch; HTTP and HTTPS are granted separately. Chrome pages, extension pages and `file://` pages are not supported.
 
-### Turning protection off and reloading pages
+### Switching off and reloading
 
-- Clicking **Disable global protection** in the popup stops the global script; turning off **protection for this site** stops the script for the current site. Turning protection off does not automatically revoke granted permissions, so re-enabling it does not require authorization again.
-- Global and per-site settings can coexist. While global mode is on, the per-site toggle is temporarily disabled; after global mode is turned off, sites that were previously enabled individually remain protected by their own settings.
-- Switching a toggle automatically reloads the current supported page. Other open tabs must be refreshed manually before their protection state updates.
-- To stop protecting all sites, turn off global protection first, then turn off each per-site protection that is still enabled. To revoke access, manage the extension's permissions on its details page in `chrome://extensions`.
+- Switch off **Every website** to stop the all-sites script, or the per-site switch to stop that site’s script. Neither revokes the permission, so switching back on needs no new prompt.
+- The two modes coexist. While the all-sites switch is on, the per-site switch is paused; once you switch all-sites off, previously enabled sites remain protected.
+- The current supported tab reloads automatically after a toggle; reload other open tabs yourself for the change to apply.
+- To stop protection everywhere, switch off all-sites and then any remaining per-site switches. To revoke access, use the extension’s details page in `chrome://extensions`.
 
 ## Permissions
 
 | Permission | Purpose |
 | --- | --- |
-| `activeTab` | Reads the current tab's address after the user clicks the extension icon, so the popup can show and act on the right site. |
-| `scripting` | Registers the `document_start` script on sites the user chooses to enable. |
-| Optional `http://*/*` and `https://*/*` host permissions | Requested for all HTTP / HTTPS sites when global mode is enabled; in manual mode, only the current scheme and host are requested. Nothing is granted automatically at install time. Turning protection off only unregisters the corresponding script and keeps the permission; the user can revoke it on Chrome's extension details page. |
+| `activeTab` | Read the current tab’s URL after you click the extension icon, to know which site the popup controls. |
+| `scripting` | Register the `document_start` script on sites you choose to protect. |
+| Optional `http://*/*` and `https://*/*` host permissions | Requested for all HTTP / HTTPS sites when all-sites mode is turned on, or only for the current scheme and host in per-site mode. Never granted at install. Switching off keeps access; revoke it in Chrome’s extension details page. |
 
-The extension does not use `storage`, cookies, history, bookmarks, downloads, or network-request permissions. Protection state is represented by the content-script registrations Chrome stores. Granted host permissions remain after protection is turned off to avoid repeated authorization prompts.
+The extension does not use `storage`, cookies, history, bookmarks, downloads or network-request permissions. Protection state lives in Chrome’s registry of content scripts; granted host permissions persist after protection is switched off to avoid repeated prompts.
 
 ## How it works
 
-The script wraps the `font` property of Canvas 2D contexts in the page's main world. When the page sets a font, the extension replaces a listed family name with an internal placeholder family name before handing the value to the browser. Because that placeholder does not exist, the browser falls back to the remaining available families in the page's font declaration. The wrapped getter returns the font string the page originally set; actual Canvas drawing and measurement use the font as resolved by the browser.
+The script wraps the `font` property of Canvas 2D contexts in the page’s main world. When a page sets a font, listed family names are replaced with an internal placeholder family before the value reaches the browser. Because that placeholder doesn’t exist, the browser falls back to the remaining families in the page’s declaration. The wrapped getter returns the string the page originally set; actual drawing and measurement use the browser’s resolved font.
 
-If the page provides a callable `queryLocalFonts()`, the extension filters matching local font entries after the native promise resolves. It does not grant any additional permission the API requires, and it does not bypass Chrome's font-access prompt.
+If the page can call `queryLocalFonts()`, the extension filters matching entries after the native promise resolves. It grants no extra permission for that API and does not bypass Chrome’s font-access prompt.
 
-## Scope and limitations
+## Scope and limits
 
-- **It does not hide system fonts themselves.** The extension does not uninstall, rename, isolate, or replace fonts on macOS, Windows, or Linux.
-- **It does not remove Chinese glyphs.** If the browser needs to draw Chinese characters, the system's CJK fallback fonts may still be used; rendered output, pixel data, and font metrics can still reveal environment characteristics.
-- **It is not a complete anti-fingerprinting solution.** DOM/CSS font measurement, unlisted font names, other Canvas paths, WebGL, system language, browser differences, and other fingerprinting signals are outside this extension's coverage.
-- **Pages may detect the extension's wrappers.** Differences between JavaScript API behavior and native implementations can be probed; the extension makes no promise of resisting detection aimed specifically at it.
-- **Fallback fonts can affect page rendering.** When a name is remapped, the page may use different glyphs, widths, or typography. Font fallback behavior is determined by the browser and the page's font stack.
-- **The timing of protection is limited.** Dynamically registered scripts start with a new document after a reload and cannot retroactively change results produced before the page loaded.
-- **Local font filtering is conditional.** Results are wrapped only when the API exists and the page can call it, and other font-enumeration paths are unaffected.
+- **System fonts are not hidden.** The extension does not uninstall, rename, sandbox or replace fonts on macOS, Windows or Linux.
+- **CJK glyphs are not removed.** When the browser needs to draw Chinese characters, a system CJK fallback font may still be used; rendered output, pixel data or metrics can still reveal your environment.
+- **Not a complete anti-fingerprinting solution.** DOM/CSS font measurement, unlisted fonts, other Canvas paths, WebGL, system language, browser differences and other signals are out of scope.
+- **Pages may detect the wrapper.** Differences between wrapped and native API behaviour can be probed; the extension makes no claim to resist detection aimed at it.
+- **Fallback fonts change rendering.** Once a name is remapped, the page may draw with different glyphs, widths or layout, as decided by the browser and the page’s font stack.
+- **Limited timing.** Dynamically registered scripts run from the next document load and cannot retroactively change results produced before it.
+- **Local font filtering is conditional.** Results are only wrapped when the API exists and the page can call it; other enumeration paths are unaffected.
 
 ## Privacy
 
-The extension runs locally and contains no telemetry, advertising, remote code, or functionality that sends data to a developer server. When protection is enabled, Chrome stores the corresponding host permission and content-script registration. Turning off global or per-site protection stops the corresponding protection script, but the permission remains in Chrome until the user revokes it in the extension settings.
+Everything runs locally. There is no telemetry, advertising, remote code, or data sent to the developer. When protection is enabled, Chrome stores the corresponding host permissions and content-script registrations; switching off stops the scripts while the permissions remain in Chrome until you revoke them.
 
-## Development and checks
+## Development
 
-The extension consists of plain Manifest V3 files and needs no bundler or dependency installation. After making changes, click the refresh button on the extension card in `chrome://extensions`, then reload the target page.
+The extension is plain Manifest V3 with no bundler or dependencies. After editing, click the reload button on the extension card in `chrome://extensions`, then reload the target page.
 
-- [`manifest.json`](manifest.json): extension metadata, permissions, and popup configuration.
-- [`popup.html`](popup.html), [`popup.css`](popup.css), [`popup.js`](popup.js): the global and per-site permission and toggle interface.
+- [`manifest.json`](manifest.json): metadata, permissions, icons and popup configuration.
+- [`popup.html`](popup.html), [`popup.css`](popup.css), [`popup.js`](popup.js): the popup with all-sites and per-site switches.
 - [`guard.js`](guard.js): the font list and page-context protection logic.
+- [`icons/icon.svg`](icons/icon.svg): icon source; the PNGs in `icons/` are rendered from it.
 
 ## License
 
-This project is released under the [MIT License](LICENSE).
+Released under the [MIT License](LICENSE).

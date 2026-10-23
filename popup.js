@@ -8,6 +8,9 @@ const siteToggle = document.querySelector("#site-toggle");
 const siteName = document.querySelector("#site-name");
 const siteOrigin = document.querySelector("#site-origin");
 const siteStatus = document.querySelector("#site-status");
+const heroKicker = document.querySelector("#hero-kicker");
+const heroTitle = document.querySelector("#hero-title");
+const heroCopy = document.querySelector("#hero-copy");
 
 let currentTab;
 let site;
@@ -82,40 +85,56 @@ async function readState() {
   renderState();
 }
 
+function renderHero() {
+  const state = globalEnabled ? "global" : siteEnabled ? "site" : "off";
+  document.body.dataset.state = state;
+  if (state === "global") {
+    heroKicker.textContent = "Guarding everywhere";
+    heroTitle.innerHTML = "Every page, <em>veiled.</em>";
+    heroCopy.textContent = "Known CJK and vendor fonts are masked in Canvas on all HTTP and HTTPS sites.";
+  } else if (state === "site") {
+    heroKicker.textContent = "Guarding this site";
+    heroTitle.innerHTML = "This page, <em>veiled.</em>";
+    heroCopy.textContent = `Canvas font probes on ${site.label} see only fallback fonts.`;
+  } else {
+    heroKicker.textContent = "Unguarded";
+    heroTitle.innerHTML = "Your fonts are <em>legible.</em>";
+    heroCopy.textContent = "Canvas can read which typefaces this system carries. Draw the veil below.";
+  }
+}
+
 function renderState(messages = {}) {
   if (Object.hasOwn(messages, "global")) globalMessage = messages.global;
   if (Object.hasOwn(messages, "site")) siteMessage = messages.site;
+  renderHero();
   globalToggle.disabled = busy;
-  globalToggle.classList.toggle("is-on", globalEnabled);
-  globalToggle.textContent = globalEnabled ? "Disable global protection" : "Enable global protection";
+  globalToggle.setAttribute("aria-checked", String(globalEnabled));
   globalStatus.textContent = globalMessage ?? (globalEnabled
-    ? "Global protection is on. The protection script runs on all authorized HTTP / HTTPS pages."
+    ? "On. Every granted HTTP / HTTPS page runs the guard."
     : globalPermissionGranted
-      ? "Global protection is off, but the permission is retained; re-enabling it will not prompt again."
-      : "Not yet authorized. Enabling this requests HTTP / HTTPS access to all sites from Chrome.");
+      ? "Off. Access is retained, so switching on won’t ask again."
+      : "Not yet granted. Chrome will ask once for access to all HTTP / HTTPS sites.");
 
   if (!site) {
-    siteName.textContent = "This page is not supported";
-    siteOrigin.textContent = "Only HTTP / HTTPS pages are supported";
-    siteToggle.textContent = "Cannot enable";
+    siteName.textContent = "Unsupported page";
+    siteOrigin.textContent = "HTTP / HTTPS only";
     siteToggle.disabled = true;
-    siteToggle.classList.remove("is-on");
-    siteStatus.textContent = "Chrome built-in pages, extension pages, and local files are not supported. The global toggle still works on websites.";
+    siteToggle.setAttribute("aria-checked", "false");
+    siteStatus.textContent = "Chrome pages, extension pages and local files can’t be guarded. The all-sites switch still works on websites.";
     return;
   }
 
   siteName.textContent = site.label;
   siteOrigin.textContent = site.key;
-  siteToggle.textContent = siteEnabled ? "Disable protection for this site" : "Enable protection for this site";
-  siteToggle.classList.toggle("is-on", siteEnabled);
+  siteToggle.setAttribute("aria-checked", String(siteEnabled || globalEnabled));
   siteToggle.disabled = busy || globalEnabled;
   siteStatus.textContent = siteMessage ?? (globalEnabled
-    ? "Global protection is running and already covers this site. Turn it off to regain per-site control."
+    ? "Covered by the all-sites guard. Switch that off to control this site on its own."
     : siteEnabled
-      ? "Protection is on for this site. Turning it off keeps the permission, so re-enabling it will not prompt again."
+      ? "On. Access stays granted if you switch it off."
       : sitePermissionGranted
-        ? "This site's permission is retained; enabling protection will not prompt again."
-        : "Enabling this asks Chrome only for access to this scheme and host.");
+        ? "Off. Access is retained; switching on won’t ask again."
+        : "Chrome will ask for access to this scheme and host only.");
 }
 
 function setBusy(value) {
@@ -131,20 +150,20 @@ async function reloadCurrentPage() {
 
 globalToggle.addEventListener("click", async () => {
   setBusy(true);
-  renderState({ global: globalEnabled ? "Disabling global protection…" : "Checking global permission…" });
+  renderState({ global: globalEnabled ? "Switching off all-sites guard…" : "Checking all-sites access…" });
 
   try {
     if (globalEnabled) {
       await chrome.scripting.unregisterContentScripts({ ids: [GLOBAL_SCRIPT_ID] });
       globalEnabled = false;
-      renderState({ global: "Global protection is off. The permission is retained, so re-enabling it will not prompt again." });
+      renderState({ global: "All-sites guard is off. Access is retained for next time." });
     } else {
       // Ask directly from the user's toolbar popup click. Chrome does not
       // prompt again when these optional origins are already granted.
       const granted = await chrome.permissions.request({ origins: ALL_SITE_ORIGINS });
       if (!granted) {
         globalPermissionGranted = false;
-        renderState({ global: "Global permission was not granted, so protection was not enabled. You can still use per-site mode below." });
+        renderState({ global: "Access wasn’t granted, so nothing changed. You can still guard a single site below." });
         return;
       }
 
@@ -163,12 +182,12 @@ globalToggle.addEventListener("click", async () => {
       }]);
       globalPermissionGranted = true;
       globalEnabled = true;
-      renderState({ global: "Global protection is on. The global permission is retained; after turning it off, re-enabling it will not prompt again." });
+      renderState({ global: "All-sites guard is on. Access is retained if you switch it off later." });
     }
 
     await reloadCurrentPage();
   } catch (error) {
-    renderState({ global: `Operation failed: ${error?.message ?? "unknown error"}` });
+    renderState({ global: `Something went wrong: ${error?.message ?? "unknown error"}` });
   } finally {
     setBusy(false);
   }
@@ -177,20 +196,20 @@ globalToggle.addEventListener("click", async () => {
 siteToggle.addEventListener("click", async () => {
   if (!site || globalEnabled) return;
   setBusy(true);
-  renderState({ site: siteEnabled ? "Disabling and reloading…" : "Checking this site's permission…" });
+  renderState({ site: siteEnabled ? "Switching off and reloading…" : "Checking site access…" });
 
   try {
     if (siteEnabled) {
       await chrome.scripting.unregisterContentScripts({ ids: [site.scriptId] });
       siteEnabled = false;
-      renderState({ site: "Protection is off for this site. The permission is retained, so re-enabling it will not prompt again." });
+      renderState({ site: "Site guard is off. Access is retained for next time." });
     } else {
       // Request directly from the toolbar popup gesture. If the site access is
       // already retained, Chrome resolves this without showing a prompt.
       const granted = await chrome.permissions.request({ origins: [site.pattern] });
       if (!granted) {
         sitePermissionGranted = false;
-        renderState({ site: "This site's permission was not granted, so protection was not enabled." });
+        renderState({ site: "Access wasn’t granted, so nothing changed." });
         return;
       }
 
@@ -209,24 +228,26 @@ siteToggle.addEventListener("click", async () => {
       }]);
       sitePermissionGranted = true;
       siteEnabled = true;
-      renderState({ site: "Protection is on for this site. The permission is retained, so re-enabling it will not prompt again." });
+      renderState({ site: "Site guard is on. Access is retained if you switch it off later." });
     }
 
     await reloadCurrentPage();
   } catch (error) {
-    renderState({ site: `Operation failed: ${error?.message ?? "unknown error"}` });
+    renderState({ site: `Something went wrong: ${error?.message ?? "unknown error"}` });
   } finally {
     setBusy(false);
   }
 });
 
 readState().catch((error) => {
-  globalToggle.textContent = "Unable to read global status";
+  document.body.dataset.state = "off";
+  heroKicker.textContent = "Unavailable";
+  heroTitle.textContent = "Couldn’t read state.";
+  heroCopy.textContent = error?.message ?? "Chrome didn’t return the permission state.";
   globalToggle.disabled = true;
-  globalStatus.textContent = error?.message ?? "Unable to read the global permission status.";
-  siteName.textContent = "Read failed";
+  globalStatus.textContent = "Couldn’t read all-sites access.";
+  siteName.textContent = "Unavailable";
   siteOrigin.textContent = "";
-  siteToggle.textContent = "Unable to read status";
   siteToggle.disabled = true;
-  siteStatus.textContent = "Unable to read the current site.";
+  siteStatus.textContent = "Couldn’t read the current site.";
 });
