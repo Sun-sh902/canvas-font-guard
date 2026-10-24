@@ -107,7 +107,7 @@ body[data-state="loading"] .blob { opacity: calc(var(--blob-opacity) * .35); fil
 }
 
 /* Hero */
-.hero { position: relative; min-height: 132px; padding: 22px 0 18px; }
+.hero { position: relative; padding: 22px 0 18px; }
 
 .specimen {
   position: absolute;
@@ -166,6 +166,7 @@ h1 {
   position: relative;
   max-width: 250px;
   margin: 10px 0 0;
+  min-height: 2.08em; /* two lines, so the popup doesn't resize once state loads */
   font: 400 31px/1.04 var(--serif);
   letter-spacing: -.015em;
 }
@@ -178,7 +179,19 @@ h1 em {
   color: transparent;
 }
 
-.hero-copy { position: relative; max-width: 240px; margin: 9px 0 0; color: var(--muted); font-size: 11.5px; line-height: 1.5; }
+.hero-copy {
+  position: relative;
+  display: -webkit-box;
+  max-width: 240px;
+  min-height: 3em;
+  margin: 9px 0 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
 
 /* Cards */
 .card {
@@ -215,6 +228,7 @@ h1 em {
 
 .meta {
   display: block;
+  min-height: 1.3em;
   overflow: hidden;
   margin-top: 3px;
   color: var(--faint);
@@ -224,7 +238,7 @@ h1 em {
   white-space: nowrap;
 }
 
-.status { margin: 9px 0 0 29px; color: var(--muted); font-size: 10.5px; line-height: 1.5; }
+.status { min-height: 3em; margin: 9px 0 0 29px; color: var(--muted); font-size: 10.5px; line-height: 1.5; }
 
 /* Switch */
 .switch {

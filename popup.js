@@ -90,15 +90,15 @@ function renderHero() {
   document.body.dataset.state = state;
   if (state === "global") {
     heroKicker.textContent = "Guarding everywhere";
-    heroTitle.innerHTML = "Every page, <em>veiled.</em>";
+    heroTitle.innerHTML = "Every page,<br><em>veiled.</em>";
     heroCopy.textContent = "Known CJK and vendor fonts are masked in Canvas on all HTTP and HTTPS sites.";
   } else if (state === "site") {
     heroKicker.textContent = "Guarding this site";
-    heroTitle.innerHTML = "This page, <em>veiled.</em>";
+    heroTitle.innerHTML = "This page,<br><em>veiled.</em>";
     heroCopy.textContent = `Canvas font probes on ${site.label} see only fallback fonts.`;
   } else {
     heroKicker.textContent = "Unguarded";
-    heroTitle.innerHTML = "Your fonts are <em>legible.</em>";
+    heroTitle.innerHTML = "Your fonts are<br><em>legible.</em>";
     heroCopy.textContent = "Canvas can read which typefaces this system carries. Draw the veil below.";
   }
 }
