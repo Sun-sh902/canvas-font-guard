@@ -321,6 +321,9 @@ footer {
   line-height: 1.5;
 }
 
+/* Opening the popup shows the saved state as-is, without replaying toggles. */
+.is-booting *, .is-booting *::before, .is-booting *::after { transition: none !important; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
