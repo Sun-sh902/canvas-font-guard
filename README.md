@@ -88,7 +88,7 @@ The per-site switch applies to the current **scheme + hostname**. Chrome host pa
 | `scripting` | Register the `document_start` script on sites you choose to protect. |
 | Optional `http://*/*` and `https://*/*` host permissions | Requested for all HTTP / HTTPS sites when all-sites mode is turned on, or only for the current scheme and host in per-site mode. Never granted at install. Switching off keeps access; revoke it in Chrome’s extension details page. |
 
-The extension does not use `storage`, cookies, history, bookmarks, downloads or network-request permissions. Protection state lives in Chrome’s registry of content scripts; granted host permissions persist after protection is switched off to avoid repeated prompts.
+The extension does not use `storage`, cookies, history, bookmarks, downloads or network-request permissions. Protection state lives in Chrome’s registry of content scripts; granted host permissions persist after protection is switched off to avoid repeated prompts. The popup also keeps the last switch states it read in its own `localStorage`, only so it can open already showing them; that data never leaves the browser, and Chrome’s registry always overrides it once read.
 
 ## How it works
 

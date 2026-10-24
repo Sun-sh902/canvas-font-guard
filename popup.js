@@ -1,6 +1,10 @@
 const ALL_SITE_ORIGINS = ["http://*/*", "https://*/*"];
 const ALL_SITE_MATCHES = [...ALL_SITE_ORIGINS];
 const GLOBAL_SCRIPT_ID = "canvas-font-guard-global-v1";
+// Last switch states the popup read, so it can open already showing them.
+// Chrome's content-script registry stays the source of truth.
+const STATE_CACHE_KEY = "canvas-font-guard-popup-state-v1";
+const STATE_CACHE_SITE_LIMIT = 200;
 
 const globalToggle = document.querySelector("#global-toggle");
 const globalStatus = document.querySelector("#global-status");
@@ -21,6 +25,39 @@ let sitePermissionGranted = false;
 let busy = false;
 let globalMessage;
 let siteMessage;
+
+function readStateCache() {
+  try {
+    return JSON.parse(localStorage.getItem(STATE_CACHE_KEY)) ?? {};
+  } catch {
+    return {};
+  }
+}
+
+function writeStateCache() {
+  try {
+    const cache = readStateCache();
+    cache.global = { enabled: globalEnabled, granted: globalPermissionGranted };
+    cache.sites ??= {};
+    if (site) {
+      // Re-insert so the most recently viewed sites survive trimming.
+      delete cache.sites[site.key];
+      cache.sites[site.key] = { enabled: siteEnabled, granted: sitePermissionGranted };
+      const keys = Object.keys(cache.sites);
+      for (const key of keys.slice(0, keys.length - STATE_CACHE_SITE_LIMIT)) delete cache.sites[key];
+    }
+    localStorage.setItem(STATE_CACHE_KEY, JSON.stringify(cache));
+  } catch {
+    // The cache only speeds up the first paint; the popup works without it.
+  }
+}
+
+function finishBoot() {
+  // Resolve styles for the real state while transitions are still off, then
+  // enable them so only the user's own toggles animate.
+  void document.body.offsetHeight;
+  document.body.classList.remove("is-booting");
+}
 
 function siteFromUrl(rawUrl) {
   try {
@@ -53,6 +90,12 @@ function hash(value) {
 async function readState() {
   [currentTab] = await chrome.tabs.query({ active: true, currentWindow: true });
   site = siteFromUrl(currentTab?.url ?? "");
+  const cachedSite = site && readStateCache().sites?.[site.key];
+  if (cachedSite) {
+    siteEnabled = cachedSite.enabled === true;
+    sitePermissionGranted = cachedSite.granted === true;
+  }
+  renderState();
 
   const [scripts, hasGlobalPermission] = await Promise.all([
     chrome.scripting.getRegisteredContentScripts(),
@@ -83,6 +126,7 @@ async function readState() {
   }
 
   renderState();
+  writeStateCache();
 }
 
 function renderHero() {
@@ -114,6 +158,9 @@ function renderState(messages = {}) {
     : globalPermissionGranted
       ? "Off. Access is retained, so switching on won’t ask again."
       : "Not yet granted. Chrome will ask once for access to all HTTP / HTTPS sites.");
+
+  // The active tab hasn't been read yet; keep the loading copy.
+  if (site === undefined) return;
 
   if (!site) {
     siteName.textContent = "Unsupported page";
@@ -190,6 +237,7 @@ globalToggle.addEventListener("click", async () => {
     renderState({ global: `Something went wrong: ${error?.message ?? "unknown error"}` });
   } finally {
     setBusy(false);
+    writeStateCache();
   }
 });
 
@@ -236,8 +284,16 @@ siteToggle.addEventListener("click", async () => {
     renderState({ site: `Something went wrong: ${error?.message ?? "unknown error"}` });
   } finally {
     setBusy(false);
+    writeStateCache();
   }
 });
+
+const cachedGlobal = readStateCache().global;
+if (cachedGlobal) {
+  globalEnabled = cachedGlobal.enabled === true;
+  globalPermissionGranted = cachedGlobal.granted === true;
+  renderState();
+}
 
 readState().catch((error) => {
   document.body.dataset.state = "off";
@@ -250,4 +306,4 @@ readState().catch((error) => {
   siteOrigin.textContent = "";
   siteToggle.disabled = true;
   siteStatus.textContent = "Couldn’t read the current site.";
-});
+}).finally(finishBoot);
