@@ -39,7 +39,7 @@
 
 * { box-sizing: border-box; }
 
-html { background: var(--bg); }
+html { overflow: hidden; background: var(--bg); }
 
 body {
   position: relative;
@@ -53,7 +53,9 @@ body {
 }
 
 /* Atmosphere: drifting colour fields under a film grain. */
-.aurora { position: absolute; inset: 0; pointer-events: none; }
+/* Clip here, not on body: body overflow propagates to the viewport, so the
+   off-edge blobs would widen the popup, which Chrome grows leftwards. */
+.aurora { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 
 .blob {
   position: absolute;
